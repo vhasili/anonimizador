@@ -1,0 +1,53 @@
+# Construye la app en ordenadores de GitHub (gratis):
+#   - Mac con procesador Apple (M1, M2, M3...)  -> Anonimizador_Mac_Apple.dmg
+#   - Mac con procesador Intel                  -> Anonimizador_Mac_Intel.dmg
+#   - Windows                                   -> Anonimizador_Windows.zip
+# Se lanza sola al subir cambios, o a mano en la pestaña "Actions" -> "Construir apps" -> "Run workflow".
+# Los archivos salen al final de la ejecución, en "Artifacts".
+name: Construir apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  mac:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15         # procesador Apple (M1, M2, M3...)
+            tipo: Apple
+          - runner: macos-15-intel   # procesador Intel
+            tipo: Intel
+    runs-on: ${{ matrix.runner }}
+    # Si uno de los dos Mac falla, el otro sigue y su DMG sale igualmente
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Construir app y DMG
+        run: bash empaquetado/construir_mac.sh
+      - name: Renombrar
+        run: mv empaquetado/dist/Anonimizador_Mac.dmg "empaquetado/dist/Anonimizador_Mac_${{ matrix.tipo }}.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Anonimizador_Mac_${{ matrix.tipo }}
+          path: empaquetado/dist/Anonimizador_Mac_${{ matrix.tipo }}.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Construir app y ZIP
+        shell: cmd
+        run: echo.| empaquetado\construir_windows.bat
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Anonimizador_Windows
+          path: empaquetado/dist/Anonimizador_Windows.zip

@@ -1,0 +1,266 @@
+===================================================================
+   ANONIMIZADOR DE HISTORIAS CLINICAS - VERSION PORTABLE USB
+   Por Javier Casas Nebra
+   Version con Fase 1 + Fase 2 (rendimiento + operativa)
+===================================================================
+
+
+COMO USARLO EN EL HOSPITAL
+---------------------------
+
+1. Conecta el USB al ordenador.
+
+2. Abre el USB desde el Explorador de Windows.
+
+3. Haz DOBLE CLIC en el archivo "INICIAR.bat".
+
+4. Se abrira una ventana negra (terminal). NO LA CIERRES.
+   Esa ventana es el motor que hace funcionar la aplicacion.
+
+5. En unos 15-30 segundos se abrira tu navegador (Chrome o Edge)
+   con la aplicacion del anonimizador.
+
+   Si no se abre solo, abre el navegador manualmente y entra en:
+       http://localhost:8501
+
+6. En la barra lateral izquierda, en "Modelo IA", elige el modelo:
+   - llama3.1:8b   (mas preciso, mas lento desde USB)
+   - qwen2.5:7b    (recomendado uso habitual, equilibrio velocidad/calidad)
+   - qwen2.5:3b    (mas rapido, ideal para lotes grandes o equipos lentos)
+
+7. NUEVO: Pulsa el boton "Precalentar" para cargar el modelo en RAM.
+   Ahorras 20-30 segundos en el primer documento.
+
+8. NUEVO: Pulsa "Ver GPU" para saber si el ordenador tiene grafica
+   dedicada. Si la tiene, ira 5-10x mas rapido.
+
+9. Sube uno o varios archivos: PDF, MD o TXT (nuevo, todos aceptados).
+
+10. Al acabar:
+    - Cierra el navegador
+    - Vuelve a la ventana negra y pulsa Ctrl+C
+    - O simplemente cierra la ventana negra
+    - Espera 5 segundos y desconecta el USB con seguridad
+
+
+NOVEDADES DE ESTA VERSION
+---------------------------
+
+RENDIMIENTO (Fase 1):
+- Acepta PDF, MD y TXT (los .md y .txt se procesan sin extraccion)
+- Cache de respuestas IA (documentos repetidos = instantaneo)
+- 1 sola llamada IA por trozo (antes eran 3)
+- Trozos de 6000 caracteres (antes 2500)
+- Boton "Precalentar" el modelo
+- Boton "Ver GPU" para detectar aceleracion
+- Impacto: ~65% mas rapido por documento
+
+OPERATIVA (Fase 2):
+- Procesamiento paralelo (slider 1-4 documentos a la vez en lote)
+- Presets de configuracion (guarda combinaciones frecuentes)
+- Diccionario aprendido (nombres que se anonimizan SIEMPRE)
+- Boton "Aprender nombres" tras cada revision
+- Deteccion de patrones HULA/SERGAS especificos:
+    * [HULA_HC] Historia clinica HULA
+    * [SERGAS_ID] Identificadores SERGAS
+    * [NHC_GALICIA] Formato area-servicio-numero
+    * [EXPLORACION_ID] Codigos radiologia (EXP, RX, TC, RM, ECO)
+    * [EPISODIO] Numeros de episodio/ingreso
+
+
+APP DE ESCRITORIO (WINDOWS Y MAC)
+---------------------------
+
+En la carpeta "empaquetado" esta todo lo necesario para crear la app
+que se reparte a los residentes (instrucciones de uso para ellos en
+empaquetado\LEEME_APP.txt):
+
+- Windows: doble clic en empaquetado\construir_windows.bat
+  -> crea empaquetado\dist\Anonimizador_Windows.zip
+- Mac (hay que hacerlo EN UN MAC): en Terminal escribe  bash  ,
+  arrastra empaquetado/construir_mac.sh y pulsa Intro
+  -> crea empaquetado/dist/Anonimizador_Mac.dmg
+
+La app NO lleva Ollama ni modelos (pesan GB): al abrirla comprueba si
+estan y, si faltan, pregunta antes de instalarlos. Tampoco lleva tu
+diccionario ni tu configuracion (tienen nombres reales).
+
+Despues de cambiar anonimizador.py hay que volver a construir la app.
+
+
+BARRA DE PROGRESO
+---------------------------
+
+Mientras se anonimiza veras una barra con el porcentaje, la parte
+o documento que va analizando, el tiempo que queda y la hora
+aproximada a la que acabara. La primera vez el tiempo es una
+estimacion; despues el programa aprende lo que tarda tu ordenador
+y la prevision es mucho mas exacta.
+
+- Puedes usar otros programas mientras tanto.
+- Si tocas algo del anonimizador, el trabajo NO se pierde.
+- Boton "Cancelar" para pararlo (tarda unos segundos en reaccionar).
+
+
+MEMORIA APRENDIDA Y COMPARTIDA ENTRE RESIDENTES
+---------------------------
+
+La app aprende de tus correcciones (boton "Aprender de mis
+correcciones" o automaticamente al descargar/exportar):
+- Nombres que dejas anonimizados   -> DICCIONARIO (siempre se anonimizan)
+- Nombres que reviertes            -> EXCLUSIONES (nunca mas se marcan)
+- [NOMBRE] que escribes a mano     -> DICCIONARIO
+
+Si anades un nombre al diccionario con un documento ya procesado,
+aparece el boton "Buscar N nombre/s nuevo/s del diccionario": busca
+SOLO esos nombres, en segundos y sin volver a pasar la IA. Lo que
+hayas escrito a mano en el editor se conserva.
+El diccionario no distingue tildes, mayusculas, espacios ni comas, y
+"Apellidos , Nombre" tambien se busca como "Nombre Apellidos".
+
+Barra lateral -> "Memoria aprendida" -> pestana "Compartir":
+- Exportar en UN SOLO ARCHIVO (nombres + exclusiones) o en
+  ARCHIVOS SEPARADOS (diccionario y exclusiones por separado).
+- Importar el archivo de otro residente: se SUMA a tu memoria,
+  sin borrar nada. Si un termino esta en el diccionario de uno y
+  en las exclusiones de otro, se queda en el diccionario (es lo
+  mas seguro para la privacidad).
+
+ATENCION: el diccionario contiene nombres reales. Compartelo solo
+por canales seguros del hospital.
+
+
+ARCHIVOS DE CONFIGURACION
+---------------------------
+
+La aplicacion crea automaticamente estos archivos en la carpeta app\:
+
+- config_anonimizador.json    : preferencias basicas (modelo, formato...)
+- diccionario_aprendido.json  : nombres que has confirmado
+- exclusiones_aprendidas.json : falsos positivos que has revertido
+- presets_anonimizador.json   : presets de configuracion guardados
+
+Todos son portables (viven en el USB, viajan contigo).
+
+
+SI ALGO FALLA
+---------------------------
+
+PROBLEMA: "Windows ha bloqueado este archivo" al abrir INICIAR.bat
+SOLUCION: Clic derecho sobre INICIAR.bat -> Propiedades -> abajo del
+          todo, marcar "Desbloquear" -> Aceptar. Volver a abrir.
+
+PROBLEMA: "No se reconoce ollama.exe como comando interno..."
+SOLUCION: La estructura del USB esta rota. Pide ayuda a Javier.
+
+PROBLEMA: La ventana negra se cierra sola al instante
+SOLUCION: Abre cmd en la carpeta del USB y escribe INICIAR.bat
+          desde alli. Veras el mensaje de error completo.
+
+PROBLEMA: El navegador no se abre solo
+SOLUCION: Abre el navegador manualmente -> http://localhost:8501
+
+PROBLEMA: La app va muy lenta procesando
+SOLUCION: Es normal cuando se ejecuta desde USB. La primera
+          historia clinica tarda mas (1-2 min) porque se carga
+          el modelo en memoria. Las siguientes iran mas rapido.
+          Para ganar velocidad, cambia al modelo qwen2.5:3b en
+          la barra lateral (es el mas ligero, ~2 GB) o a
+          qwen2.5:7b (equilibrio).
+          Tambien puedes subir el slider de "Documentos en
+          paralelo" a 2 o 3 en el modo lote.
+
+
+PRIVACIDAD - LO IMPORTANTE
+---------------------------
+
+- 100% local: ningun dato sale del ordenador, ni siquiera para usar
+  la IA. Todo el procesamiento ocurre dentro del USB y la memoria
+  del ordenador.
+
+- No se guardan los PDF originales en ningun sitio del ordenador
+  donde se ejecuta. Lo unico que queda son los archivos
+  anonimizados que tu mismo descargues a la carpeta "salidas/" del USB.
+
+- Puedes desconectar internet del ordenador del hospital antes
+  de empezar; la aplicacion seguira funcionando perfectamente.
+
+
+ESTRUCTURA DEL USB
+---------------------------
+
+\
++-- INICIAR.bat              <- Doble clic para arrancar
++-- LEEME.txt                <- Este archivo
++-- python\                  <- Python portable
++-- ollama\                  <- Motor de IA
++-- modelos\                 <- Modelos descargados (llama3.1, qwen2.5 7b y 3b)
++-- app\
+|   +-- anonimizador.py               <- La aplicacion
+|   +-- config_anonimizador.json      <- Se crea al primer uso
+|   +-- diccionario_aprendido.json    <- Se crea al aprender nombres
+|   +-- presets_anonimizador.json     <- Se crea al guardar presets
++-- salidas\                 <- Aqui se descargan los .md anonimizados
+
+
+CONFIGURACION DE FECHAS
+---------------------------
+
+La aplicacion permite tres modos de tratamiento de fechas:
+- "Desplazar" (recomendado): mantiene los intervalos relativos.
+  El desplazamiento es FIJO y se guarda en config_anonimizador.json.
+  Apuntalo en sitio seguro: si lo pierdes no podras correlacionar
+  con datos posteriores.
+- "Borrar": maxima privacidad, pierde temporalidad.
+- "No tocar": las fechas quedan como en el original.
+
+
+ATAJOS UTILES
+---------------------------
+
+- Detener todo:        cierra la ventana negra
+- Volver a empezar:    cierra ventana negra y vuelve a doble clic
+- Cambiar de modelo:   barra lateral -> Modelo IA -> elige otro
+- Precalentar modelo:  barra lateral -> boton "Precalentar"
+- Ver si usa GPU:      barra lateral -> boton "Ver GPU"
+- Validar resultado:   pasa el raton sobre [NOMBRE], [DNI], etc
+- Revertir cambios:    expander "Revertir sustituciones" -> elige
+                       categoria -> marca o desmarca casillas
+- Aprender nombres:    tras revisar, boton "Aprender de mis
+                       correcciones" en el panel de reversion
+
+
+FLUJO DE TRABAJO RECOMENDADO
+---------------------------
+
+1. Al abrir la app, pulsa "Precalentar" (una sola vez)
+2. Sube los archivos (PDF, MD o TXT)
+3. Revisa el resultado en la VISTA COLOREADA (izquierda): pasa el
+   raton sobre lo coloreado para ver el original. Con varios
+   archivos, cambia de documento con el selector o con los botones
+   de flecha (recuerda en que documento y en que punto estabas).
+4. Corrige lo necesario:
+   - DOBLE CLIC sobre algo coloreado para deshacerlo (y otro doble
+     clic para volver a anonimizarlo). Tambien puedes usar el panel
+     "Revertir sustituciones".
+   - Escribe tus cambios en el EDITOR (derecha). Al bajar por la
+     vista coloreada, el editor baja a la vez.
+5. Pulsa "Aprender de mis correcciones" (o deja activado el
+   aprendizaje automatico al exportar)
+6. Pulsa "Exportar" y despues "Descargar". Se descarga siempre lo
+   que hay en el editor, incluido lo ultimo que hayas escrito.
+   Por defecto lo anonimizado DESAPARECE del archivo exportado (menos
+   palabras para analizarlo despues). Si prefieres que quede marcado
+   como [NOMBRE], [DNI]..., cambialo en la barra lateral, debajo de
+   "Formato salida".
+7. Repetir con los siguientes documentos
+
+Cada revision hace que la app sea mas precisa la proxima vez, sin
+necesidad de reentrenar nada.
+
+
+CONTACTO
+---------------------------
+Aplicacion creada por Javier Casas Nebra.
+
+===================================================================

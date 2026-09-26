@@ -1,0 +1,21 @@
+# Datos personales: contienen nombres reales de pacientes y médicos. NUNCA se suben.
+diccionario_aprendido.json
+exclusiones_aprendidas.json
+config_anonimizador.json
+presets_anonimizador.json
+instancia.json
+lanzador.json
+datos/
+*_ANON.*
+*.pdf
+
+# Archivos de construcción (se regeneran solos)
+__pycache__/
+empaquetado/venv_build*/
+empaquetado/build/
+empaquetado/dist/
+empaquetado/icono.ico
+empaquetado/icono.png
+
+# Ajustes locales de Claude Code
+.claude/

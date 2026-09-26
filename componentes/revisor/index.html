@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --alto: 600px; --txt: #e8e8e8; --fondo2: #262730; --borde: #555; }
+  html, body { margin: 0; padding: 0; background: transparent; color: var(--txt);
+               font-family: "Source Sans Pro", "Segoe UI", sans-serif; }
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+  .tit { font-size: 14px; margin: 0 0 6px; }
+  .tit small { opacity: .7; }
+  /* Misma letra, interlineado y ajuste de línea en los dos cuadros: así el scroll va parejo */
+  .caja { box-sizing: border-box; height: var(--alto); overflow-y: auto; margin: 0; padding: 12px;
+          border-radius: 6px; font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.6;
+          white-space: pre-wrap; overflow-wrap: anywhere; }
+  #vista { background: #1e1e1e; color: #e8e8e8; border: 1px solid #1e1e1e; }
+  #editor { background: var(--fondo2); color: var(--txt); border: 1px solid var(--borde);
+            resize: none; width: 100%; outline: none; }
+  #editor:focus { border-color: #ff4b4b; }
+  .s { color: #000; border-radius: 3px; font-weight: bold; cursor: pointer; }
+  .s:hover { outline: 2px solid #fff; }
+  .s.rev { background: transparent !important; color: inherit; font-weight: normal; outline: 1px dashed #999; }
+  @media (max-width: 700px) { .cols { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="cols">
+  <div class="col">
+    <div class="tit"><b>Vista coloreada</b> <small>· doble clic sobre lo coloreado para deshacerlo (y otra vez para rehacerlo)</small></div>
+    <div id="vista" class="caja"></div>
+  </div>
+  <div class="col">
+    <div class="tit"><b>✏️ Editor</b> <small>· escribe aquí tus cambios; es lo que se exporta</small></div>
+    <textarea id="editor" class="caja" spellcheck="false"></textarea>
+  </div>
+</div>
+<script>
+// Protocolo de componentes de Streamlit (sin librerías): mensajes con window.parent
+function enviar(tipo, datos) {
+  window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type: tipo }, datos), "*");
+}
+function ajustarAltura() { enviar("streamlit:setFrameHeight", { height: document.body.scrollHeight + 6 }); }
+
+const vista = document.getElementById("vista");
+const editor = document.getElementById("editor");
+let uid = null;          // documento que se está mostrando
+let verLocal = null;     // versión del texto del editor recibida de Python
+let editado = false;     // el usuario ha escrito algo que Python aún no ha "adoptado"
+let pendientes = [];     // dobles clics aún no confirmados por Python
+let temporizador = null;
+let contador = 0;
+
+function mandarValor() {
+  clearTimeout(temporizador);
+  temporizador = null;
+  enviar("streamlit:setComponentValue", {
+    value: { uid: uid, ver: verLocal, eventos: pendientes, editor: editado ? editor.value : null },
+    dataType: "json",
+  });
+}
+
+function pintarVista(segmentos) {
+  const frag = document.createDocumentFragment();
+  for (const s of segmentos) {
+    if (s.t !== undefined) { frag.appendChild(document.createTextNode(s.t)); continue; }
+    const sp = document.createElement("span");
+    sp.className = "s" + (s.rev ? " rev" : "");
+    sp.textContent = s.rev ? s.orig : s.etq;
+    sp.style.background = s.color;
+    sp.title = s.rev ? "Deshecho (era " + s.etq + "). Doble clic para volver a anonimizar"
+                     : "Original: " + s.orig + "\nDoble clic para deshacer";
+    sp.dataset.i = s.i;
+    frag.appendChild(sp);
+  }
+  const arriba = vista.scrollTop;
+  vista.replaceChildren(frag);
+  vista.scrollTop = arriba;
+}
+
+// Doble clic: deshacer / rehacer la sustitución (sin seleccionar texto)
+vista.addEventListener("mousedown", (e) => { if (e.detail > 1 && e.target.closest(".s")) e.preventDefault(); });
+vista.addEventListener("dblclick", (e) => {
+  const sp = e.target.closest(".s");
+  if (!sp) return;
+  e.preventDefault();
+  sp.classList.toggle("rev");  // respuesta inmediata; Python redibuja con el texto correcto
+  pendientes.push({ id: Date.now().toString(36) + "-" + (contador++), tipo: "alternar", i: Number(sp.dataset.i) });
+  mandarValor();
+});
+
+// Editor: se envía a Python al dejar de escribir un momento o al salir del cuadro
+editor.addEventListener("input", () => {
+  editado = true;
+  clearTimeout(temporizador);
+  temporizador = setTimeout(mandarValor, 700);
+});
+editor.addEventListener("blur", () => { if (temporizador) mandarValor(); });
+
+// Scroll acompasado entre los dos cuadros (proporcional a lo recorrido)
+let bloqueo = { el: null, hasta: 0 };
+function sincronizar(origen, destino) {
+  const max1 = origen.scrollHeight - origen.clientHeight;
+  const max2 = destino.scrollHeight - destino.clientHeight;
+  if (max1 <= 0 || max2 <= 0) return;
+  bloqueo = { el: destino, hasta: performance.now() + 100 };
+  destino.scrollTop = origen.scrollTop / max1 * max2;
+}
+// Posición guardada como proporción (0-1) por documento, para volver al mismo punto
+// aunque Streamlit vuelva a crear este cuadro al actualizar la página
+function proporcion() {
+  const max = vista.scrollHeight - vista.clientHeight;
+  return max > 0 ? vista.scrollTop / max : 0;
+}
+function guardarScroll() {
+  if (!uid || vista.clientHeight === 0) return;
+  try { sessionStorage.setItem("revisor_scroll_" + uid, String(proporcion())); } catch (_) {}
+}
+function alHacerScroll(origen, destino) {
+  return (e) => {
+    if (e.target === bloqueo.el && performance.now() < bloqueo.hasta) return;
+    sincronizar(origen, destino);
+    guardarScroll();
+  };
+}
+vista.addEventListener("scroll", alHacerScroll(vista, editor));
+editor.addEventListener("scroll", alHacerScroll(editor, vista));
+window.addEventListener("pagehide", guardarScroll);
+
+let tocadoPorUsuario = false;
+for (const tipo of ["wheel", "mousedown", "keydown", "touchstart"]) {
+  document.addEventListener(tipo, () => { tocadoPorUsuario = true; }, { capture: true, passive: true });
+}
+function restaurarScroll() {
+  let p = 0;
+  try { p = Number(sessionStorage.getItem("revisor_scroll_" + uid) || 0); } catch (_) {}
+  if (!(p > 0)) return;
+  tocadoPorUsuario = false;
+  const doc = uid;
+  let intentos = 0;
+  const aplicar = () => {
+    if (tocadoPorUsuario || doc !== uid) return;
+    const max = vista.scrollHeight - vista.clientHeight;
+    if (max <= 0) {  // el texto aún no está colocado: volver a probar en un momento
+      if (intentos++ < 50) setTimeout(aplicar, 100);
+      return;
+    }
+    vista.scrollTop = p * max;
+    sincronizar(vista, editor);
+  };
+  aplicar();
+  // Por si el texto termina de colocarse después (ancho definitivo, letra cargada...)
+  for (const ms of [250, 800]) setTimeout(aplicar, ms);
+}
+
+window.addEventListener("message", (ev) => {
+  if (!ev.data || ev.data.type !== "streamlit:render") return;
+  const a = ev.data.args;
+  const tema = ev.data.theme || {};
+  const raiz = document.documentElement.style;
+  raiz.setProperty("--alto", (a.alto || 600) + "px");
+  if (tema.textColor) raiz.setProperty("--txt", tema.textColor);
+  if (tema.secondaryBackgroundColor) raiz.setProperty("--fondo2", tema.secondaryBackgroundColor);
+
+  const nuevoDoc = a.uid !== uid;
+  if (nuevoDoc && uid) guardarScroll();  // posición del documento anterior, antes de cambiar el contenido
+  const confirmados = new Set(a.vistos || []);
+  pendientes = pendientes.filter((p) => !confirmados.has(p.id));
+  pintarVista(a.segmentos);
+
+  if (nuevoDoc || a.ver !== verLocal || (!editado && editor.value !== a.editor)) {
+    const arriba = editor.scrollTop;
+    editor.value = a.editor;
+    editor.scrollTop = arriba;
+    if (nuevoDoc || a.ver !== verLocal) editado = false;
+    verLocal = a.ver;
+  }
+  if (nuevoDoc) {
+    uid = a.uid;
+    pendientes = [];
+    restaurarScroll();
+  }
+  ajustarAltura();
+});
+window.addEventListener("resize", ajustarAltura);
+enviar("streamlit:componentReady", { apiVersion: 1 });
+</script>
+</body>
+</html>

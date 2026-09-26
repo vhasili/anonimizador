@@ -1,0 +1,91 @@
+===================================================================
+   ANONIMIZADOR DE HISTORIAS CLINICAS - APP DE ESCRITORIO
+   Por Javier Casas Nebra
+===================================================================
+
+100% local: ningun dato sale del ordenador. La IA (Ollama) funciona
+dentro del propio ordenador.
+
+
+INSTALAR Y ABRIR
+---------------------------
+
+WINDOWS
+1. Descomprime Anonimizador_Windows.zip donde quieras
+   (por ejemplo en Documentos).
+2. Entra en la carpeta "Anonimizador" y haz doble clic en
+   "Anonimizador.exe".
+3. La primera vez Windows puede decir "Windows protegio su PC":
+   pulsa "Mas informacion" y despues "Ejecutar de todas formas".
+4. Te preguntara si quieres un acceso directo en el escritorio.
+
+MAC
+1. Abre Anonimizador_Mac.dmg y arrastra "Anonimizador" a la
+   carpeta Aplicaciones.
+2. La primera vez: en Aplicaciones, clic DERECHO sobre Anonimizador
+   -> "Abrir" -> "Abrir". (Solo la primera vez; despues, doble clic
+   normal.) Si no deja, ve a Ajustes del Sistema -> Privacidad y
+   seguridad -> "Abrir igualmente".
+
+
+LA PRIMERA VEZ
+---------------------------
+
+- Si el ordenador no tiene el motor de IA (Ollama), la app te
+  pregunta si quieres descargarlo e instalarlo (aprox. 1 GB).
+  Sin el, el programa funciona igual, pero sin deteccion de
+  nombres por IA (si con el diccionario y las reglas).
+- Si no hay ningun modelo de IA, te deja elegir:
+    qwen2.5:3b -> rapido, 1,9 GB (recomendado)
+    qwen2.5:7b -> mas preciso, 4,7 GB (ordenadores potentes)
+- Tambien te ofrece el LECTOR DE PDF ESCANEADOS (OCR), el modelo
+  qwen2.5vl:3b (3,2 GB). Sirve para los PDF que son una foto o un
+  escaneo (sin texto seleccionable). Si ahora dices que no, puedes
+  descargarlo despues desde el programa: barra lateral ->
+  "Lector de PDF escaneados" -> "Descargar lector OCR".
+- Hace falta internet solo para esas descargas. Despues funciona
+  sin internet.
+
+
+USO DIARIO
+---------------------------
+
+- Al abrir la app aparece una ventanita de control y, en unos
+  segundos, el programa en su propia ventana.
+- Deja la ventanita abierta (puedes minimizarla). Para terminar,
+  pulsa "Salir" en ella.
+- Si cierras la ventana del programa sin querer, pulsa
+  "Abrir el programa" en la ventanita.
+
+
+DONDE SE GUARDAN TUS DATOS
+---------------------------
+
+El diccionario aprendido, las exclusiones y la configuracion se
+guardan en tu usuario de este ordenador (no dentro de la app):
+  Windows: %APPDATA%\AnonimizadorHC
+  Mac:     ~/Library/Application Support/AnonimizadorHC
+Asi, al actualizar la app no pierdes nada.
+
+Para pasar tu diccionario a otro ordenador o a otro residente:
+barra lateral -> "Memoria aprendida" -> "Compartir" -> Exportar /
+Importar. OJO: contiene nombres reales, compartelo solo por canales
+seguros del hospital.
+
+MODO USB PORTATIL (opcional): si junto a la app creas una carpeta
+llamada "datos", todo se guarda ahi en vez de en el ordenador. Y si
+junto a la app hay carpetas "ollama" (con ollama.exe) y "modelos",
+se usan esas, sin instalar nada en el ordenador.
+
+
+SI ALGO FALLA
+---------------------------
+
+- La ventanita dice "No se ha podido arrancar": cierra y vuelve a
+  abrir la app. Si se repite, avisa a Javier.
+- La IA va lenta: en la barra lateral elige el modelo qwen2.5:3b.
+- Un PDF escaneado da error "falta el lector de PDF escaneados":
+  descargalo en la barra lateral (apartado "Lector de PDF
+  escaneados"). Los escaneados tardan mas: la IA lee pagina a pagina
+  (en un ordenador sin tarjeta grafica, del orden de 1-2 minutos por
+  pagina). La barra de progreso te dice cuanto falta.
